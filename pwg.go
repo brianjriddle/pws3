@@ -1,37 +1,54 @@
 package main
 
+import "bytes"
 import "crypto/sha256"
+import "encoding/binary"
 import "flag"
 import "fmt"
+import "io"
 import "os"
+
+var passwordFile *os.File
+
+func readChunk(size int) (chunk []byte){
+    chunk = make([]byte, size)
+    bytesRead, err := passwordFile.Read(chunk)    
+    if err != nil && err != io.EOF {
+        panic(err)
+    }
+    if bytesRead == 0 {
+      //no bytes read 
+    }
+    return 
+}
+
+func openPasswordFile(fileName string){
+    var err error
+    passwordFile, err = os.Open(fileName)
+    if err != nil {
+        panic(err)
+    }
+}
 
 func main(){
     flag.Parse()
     fileName := flag.Args()[0]
     password := flag.Args()[1]
-    passwordFile, err := os.Open(fileName)
-    if err != nil {
-        panic(err)
-    }
-    passwordSafe3Header := make([]byte, 4)
-    bytesRead, err := passwordFile.Read(passwordSafe3Header)    
-    fmt.Printf("%d bytes: '%s'\n", bytesRead, string(passwordSafe3Header))
-    salt := make([]byte, 32)
-    bytesRead, err = passwordFile.Read(salt)    
-    fmt.Printf("%d bytes\n", bytesRead)
-    iter := make([]byte, 4)
-    bytesRead, err = passwordFile.Read(iter)
-    fmt.Printf("%x \n", iter)
+    openPasswordFile(fileName)
+    passwordSafe3Header := readChunk(4)
 
-    storedPassword := make([]byte, 32)
-    bytesRead, err = passwordFile.Read(storedPassword)    
-    fmt.Printf("%d bytes\n", bytesRead)
-    fmt.Printf("%x \n", storedPassword)
-    hash := sha256.New()
-    stretched := sha256.Sum256([]byte(password))
-    fmt.Printf("%x\n", hash.Sum([]byte(password)))
-    for i:= 0; i < 524288 ;  i++ {
-        stretched = sha256.Sum256(stretched)
+    fmt.Printf("header = %s\n", string(passwordSafe3Header))
+    salt := readChunk(32)
+    iterBytes := readChunk(4)
+    iter := int(binary.LittleEndian.Uint32(iterBytes))
+
+    storedPassword := readChunk(32)
+    stretched := sha256.Sum256(append([]byte(password), salt[:]...))
+    for i:= 0; i <= iter ;  i++ {
+        stretched = sha256.Sum256(stretched[:])
     }
-    fmt.Printf("%x\n", hash.Sum([]byte(password)))
-}
+    if !bytes.Equal(storedPassword, stretched[:]) {
+        fmt.Println("Passwords do not match")
+        os.Exit(1)
+    }
+//}
