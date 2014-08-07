@@ -5,6 +5,7 @@ import "code.google.com/p/go.crypto/twofish"
 import "crypto/cipher"
 import "crypto/sha256"
 import "encoding/binary"
+import "errors"
 import "flag"
 import "fmt"
 import "io"
@@ -13,12 +14,36 @@ import "os"
 var passwordFile *os.File
 var salt []byte
 var iter int
+var vault Vault
 
+type Header struct {
+    Version int
+}
+
+type Field struct {
+    raw_length int
+    raw_type byte
+    raw_value []byte
+}
+
+type Record struct {
+    Group,Title,URL,Username,Password,Notes string
+}
+
+type Vault struct {
+    header Header
+    records []Record
+}
+
+func NewVault(size int) *Vault {
+    return &Vault{records:make([]Record, size)}
+}
 /**
 * Inspired from https://metacpan.org/source/TLINDEN/Crypt-PWSafe3-1.14/lib/Crypt/PWSafe3.pm
 * ,http://sourceforge.net/p/passwordsafe/code/HEAD/tree/trunk/pwsafe/pwsafe/docs/formatV3.txt,
 * https://github.com/sommer/loxodo
 */
+
 func readChunk(size int) (chunk []byte){
     chunk = make([]byte, size)
     bytesRead, err := passwordFile.Read(chunk)    
@@ -26,7 +51,7 @@ func readChunk(size int) (chunk []byte){
         panic(err)
     }
     if bytesRead == 0 {
-      //no bytes read 
+        //no bytes read 
     }
     return 
 }
@@ -95,21 +120,44 @@ func main() {
         panic(err) 
     }
     mode := cipher.NewCBCDecrypter(block, iv)
+    for {
+        field, _ := readFieldInfo(mode)
+        if field != nil {
+            fmt.Printf("%d\n", field.raw_length)
+            fmt.Printf("%d\n", field.raw_type)
+            //fmt.Printf("%x\n", binary.LittleEndian.Uint16(field.raw_value))
+        }
+        if (field.raw_type == 0xff){
+            break
+        }
+    }
+}
+
+func readFieldInfo(mode cipher.BlockMode) (*Field, error) {
     data := readChunk(16); 
 
     if len(data) < 16 {
-        panic("EOF encountered when parsing record field")
+        return nil, errors.New("EOF encountered when parsing record field")
     }
 
     if string(data) == "PWS3-EOFPWS3-EOF" {
-        //return 0
+        return nil, nil
     }
 
     mode.CryptBlocks(data, data)
-    raw_length := binary.LittleEndian.Uint32(data[0:4])
+    raw_length := int(binary.LittleEndian.Uint32(data[0:4]))
     raw_type := data[4]
-    raw_data := data[5:]
-    fmt.Printf("%d\n", raw_length)
-    fmt.Printf("%d\n", raw_type)
-    fmt.Printf("%x\n", binary.LittleEndian.Uint16(raw_data[:raw_length]))
+    raw_value := data[5:]
+    if (raw_length > 11){
+        for i := 0; i < ((raw_length + 4)/16); i++{
+            data = readChunk(16)
+            if len(data) < 16 {
+                return nil, errors.New("EOF encountered when parsing record field")
+            }
+            mode.CryptBlocks(data,data)
+            raw_value = data[:]
+        }
+        raw_value = raw_value[:raw_length]
+    }
+    return &Field{raw_length, raw_type, raw_value[:raw_length]}, nil
 }
