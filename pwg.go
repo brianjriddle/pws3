@@ -14,30 +14,11 @@ import "os"
 var passwordFile *os.File
 var salt []byte
 var iter int
-var vault Vault
-
-type Header struct {
-    Version int
-}
-
-type Field struct {
-    raw_length int
-    raw_type byte
-    raw_value []byte
-}
 
 type Record struct {
     Group,Title,URL,Username,Password,Notes string
 }
 
-type Vault struct {
-    header Header
-    records []Record
-}
-
-func NewVault(size int) *Vault {
-    return &Vault{records:make([]Record, size)}
-}
 /**
 * Inspired from https://metacpan.org/source/TLINDEN/Crypt-PWSafe3-1.14/lib/Crypt/PWSafe3.pm
 * ,http://sourceforge.net/p/passwordsafe/code/HEAD/tree/trunk/pwsafe/pwsafe/docs/formatV3.txt,
@@ -120,17 +101,17 @@ func main() {
         panic(err) 
     }
     mode := cipher.NewCBCDecrypter(block, iv)
+    header := Header{}
     for {
         field, _ := readFieldInfo(mode)
         if field != nil {
-            fmt.Printf("%d\n", field.raw_length)
-            fmt.Printf("%d\n", field.raw_type)
-            //fmt.Printf("%x\n", binary.LittleEndian.Uint16(field.raw_value))
+            header.mapField(field) 
         }
         if (field.raw_type == 0xff){
             break
         }
     }
+    header.dumpHeader()
 }
 
 func readFieldInfo(mode cipher.BlockMode) (*Field, error) {
