@@ -116,7 +116,7 @@ func main() {
         if field == nil {
             break
         }
-        current_record.mapField(field) 
+        current_record.mapField(field)
         if (field.raw_type == 0xff){
             records = append(records, current_record)
             current_record = Record{}
