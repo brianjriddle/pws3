@@ -14,10 +14,7 @@ import "os"
 var passwordFile *os.File
 var salt []byte
 var iter int
-
-type Record struct {
-    Group,Title,URL,Username,Password,Notes string
-}
+var records []Record
 
 /**
 * Inspired from https://metacpan.org/source/TLINDEN/Crypt-PWSafe3-1.14/lib/Crypt/PWSafe3.pm
@@ -112,7 +109,25 @@ func main() {
         }
     }
     header.dumpHeader()
+
+    current_record := Record{}
+    for{
+        field, _ := readFieldInfo(mode)
+        if field == nil {
+            break
+        }
+        current_record.mapField(field) 
+        if (field.raw_type == 0xff){
+            records = append(records, current_record)
+            current_record = Record{}
+        }
+    }
+
+    for _,record := range records{
+        record.dumpRecord()
+    }
 }
+
 
 func readFieldInfo(mode cipher.BlockMode) (*Field, error) {
     data := readChunk(16); 
@@ -136,7 +151,7 @@ func readFieldInfo(mode cipher.BlockMode) (*Field, error) {
                 return nil, errors.New("EOF encountered when parsing record field")
             }
             mode.CryptBlocks(data,data)
-            raw_value = data[:]
+            raw_value = append(raw_value, data...)
         }
         raw_value = raw_value[:raw_length]
     }
