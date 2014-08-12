@@ -3,13 +3,16 @@ package main
 import "bytes"
 import "code.google.com/p/go.crypto/twofish"
 import "crypto/cipher"
+import "crypto/md5"
 import "crypto/sha256"
 import "encoding/binary"
 import "errors"
 import "flag"
 import "fmt"
+import "github.com/brianjriddle/pws3/gpgagent"
 import "io"
 import "os"
+import "path/filepath"
 
 var passwordFile *os.File
 var salt []byte
@@ -57,12 +60,19 @@ func verifyTag(){
         os.Exit(1)
     }
 }
+func makeCacheId() string {
+    fullpath, _ := filepath.Abs(passwordFile.Name())
+    fmt.Printf("size = %d hash = %x\n", len(md5.Sum([]byte(fullpath))), md5.Sum([]byte(fullpath)))
+    cacheid := fmt.Sprintf("%x", md5.Sum([]byte(fullpath)))
+    return cacheid
+}
+
 
 func main() {
     flag.Parse()
     fileName := flag.Args()[0]
-    password := flag.Args()[1]
     openPasswordFile(fileName)
+    password := gpgagent.GetPassphrase(makeCacheId(), "X", "X", "X")
     verifyTag()
     salt = readChunk(32)
     iter = int(binary.LittleEndian.Uint32(readChunk(4)))
