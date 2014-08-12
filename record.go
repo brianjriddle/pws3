@@ -34,12 +34,11 @@ func (record *Record) mapField(field *Field) {
 }
 
 func (record *Record) dumpRecord() {
-    fmt.Printf("%s\n", record.Group)
-    fmt.Printf("%s\n", record.Title)
-    fmt.Printf("len(records) = %d\n", len(records))
-    fmt.Printf("%s\n", record.UserName)
-    fmt.Printf("%s\n", record.Notes)
+    fmt.Printf("group = %s\n", record.Group)
+    fmt.Printf("title = %s\n", record.Title)
+    fmt.Printf("username = %s\n", record.UserName)
     fmt.Printf("%s\n", record.Password)
-    fmt.Printf("%s\n", record.CreationTime)
-    fmt.Printf("%s\n", record.PasswordModificationTime)
+    fmt.Printf("Notes = %s\n", record.Notes)
+    fmt.Printf("created = %s\n", record.CreationTime)
+    fmt.Printf("last modified = %x\n", record.PasswordModificationTime)
 }
