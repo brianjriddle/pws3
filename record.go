@@ -32,7 +32,7 @@ func (record *Record) mapField(field *Field) {
     }
 }
 
-func (record *Record) dumpRecord() {
+func (record *Record) DumpRecord() {
     fmt.Printf("group = %s\n", record.Group)
     fmt.Printf("title = %s\n", record.Title)
     fmt.Printf("username = %s\n", record.UserName)

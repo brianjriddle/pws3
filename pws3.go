@@ -7,6 +7,7 @@ import "github.com/brianjriddle/pws3/gpgagent"
 import "log"
 import "os"
 import "path/filepath"
+import "regexp"
 
 /**
 * Inspired from https://metacpan.org/source/TLINDEN/Crypt-PWSafe3-1.14/lib/Crypt/PWSafe3.pm
@@ -35,4 +36,17 @@ func main() {
     password := gpgagent.GetPassphrase(makeCacheId(fileName), "X", "X", "X")
     v := OpenVault(fileName, password)
     v.DumpVault()
+    if len(flag.Args()) >= 2 {
+        find := flag.Args()[1]
+        r, err := regexp.Compile(find)
+        if err != nil {
+            log.Fatal("There is a problem with your regexp.", err)
+        }
+        for i := range v.Records {
+            if r.MatchString(v.Records[i].Title) {
+                fmt.Printf("%s\t%s\n", v.Records[i].Title, v.Records[i].Password)
+            }
+        } 
+    }
+
 }
