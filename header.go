@@ -22,8 +22,3 @@ func (header *Header) mapField(field *Field) {
     }
 }
 
-func(header *Header)dumpHeader(){
-    fmt.Printf("version = %x\n", header.Version)
-    fmt.Printf("uuid = %s\n", header.UUID)
-    fmt.Printf("non default preference = %s\n", header.NonDefaultPreference)
-}

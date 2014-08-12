@@ -16,7 +16,6 @@ func (record *Record) mapField(field *Field) {
         record.Title = string(field.raw_value[:field.raw_length])
     }
     if (field.raw_type == 0x04) {
-        fmt.Printf("-%s-\n", string(field.raw_value))
         record.UserName = string(field.raw_value)
     }
     if (field.raw_type == 0x05) {
