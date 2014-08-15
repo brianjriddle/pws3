@@ -44,7 +44,7 @@ func main() {
         }
         for i := range v.Records {
             if r.MatchString(v.Records[i].Title) {
-                fmt.Printf("%s\t%s\n", v.Records[i].Title, v.Records[i].Password)
+                v.Records[i].DumpRecord()
             }
         } 
     }
