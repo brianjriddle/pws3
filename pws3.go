@@ -3,7 +3,6 @@ package main
 import "crypto/md5"
 import "flag"
 import "fmt"
-import "github.com/brianjriddle/pws3/gpgagent"
 import "log"
 import "os"
 import "path/filepath"
@@ -30,10 +29,10 @@ func main() {
     }
     fileName := flag.Args()[0]
     if(*forget == true){
-        gpgagent.ClearPassphrase(makeCacheId(fileName))
+        ClearPassphrase(makeCacheId(fileName))
         os.Exit(0)
     }
-    password := gpgagent.GetPassphrase(makeCacheId(fileName), "X", "X", "X")
+    password := GetPassphrase(makeCacheId(fileName), "X", "X", "X")
     v := OpenVault(fileName, password)
     v.DumpVault()
     if len(flag.Args()) >= 2 {

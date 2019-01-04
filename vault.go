@@ -1,7 +1,7 @@
 package main
 
 import "bytes"
-import "code.google.com/p/go.crypto/twofish"
+import "golang.org/x/crypto/twofish"
 import "crypto/cipher"
 import "crypto/sha256"
 import "encoding/binary"

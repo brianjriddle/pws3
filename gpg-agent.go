@@ -1,4 +1,4 @@
-package gpgagent
+package main
 
 import "bufio"
 import "fmt"
@@ -9,16 +9,6 @@ import "strings"
 //Name of gpg-connect-agent
 
 const GPG_AGENT_CONNECT = "gpg-connect-agent"
-
-func main(){
-    _, err := exec.LookPath(GPG_AGENT_CONNECT)
-    if err != nil {
-        log.Fatal("gpg-agent-connect is not installed")
-    }
-    ClearPassphrase("1")
-    password := GetPassphrase("1", "X", "X", "X")
-    fmt.Printf("password is '%s'\n", password)
-}
 
 //Clears the password from gpg-agent for the given cacheid.
 //Even if the 
